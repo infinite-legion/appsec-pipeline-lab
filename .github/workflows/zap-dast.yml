@@ -22,10 +22,10 @@ jobs:
           target: 'http://localhost:3000'
           fail_action: false # Permite que el pipeline termine con exito aunque encuentre vulnerabilidades, para que puedas descargar el reporte HTML
           token: ${{ secrets.GITHUB_TOKEN }}
-          artifact_name: 'reportedast'
+          artifact_name: 'zap_out.html'
 
       - name: Guardar Reporte de ZAP como Artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: 'reportedast'
+          name: 'reportefinal'
           path: zap_out.html
