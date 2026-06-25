@@ -16,16 +16,20 @@ jobs:
           # Esperar 15 segundos para asegurar que el servidor web de la app responda bien
           sleep 15
 
-      - name: Ejecutar OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          target: 'http://localhost:3000'
-          fail_action: false # Permite que el pipeline termine con exito aunque encuentre vulnerabilidades, para que puedas descargar el reporte HTML
-          token: ${{ secrets.GITHUB_TOKEN }}
-          artifact_name: 'reportezap'
+      - name: Ejecutar OWASP ZAP por comandos nativos
+        run: |
+          # 1. Creamos el archivo vacío en el espacio de trabajo local del pipeline
+          touch ${{ github.workspace }}/zap_out.html
+          
+          # 2. Le asignamos permisos totales para evitar problemas de escritura dentro del contenedor
+          chmod 777 ${{ github.workspace }}/zap_out.html
+          
+          # 3. Corremos ZAP mapeando el volumen local y forzando privilegios con --user root
+          # Usamos "|| true" al final para que el pipeline no se detenga si ZAP encuentra vulnerabilidades
+          docker run --user root --network=host -v ${{ github.workspace }}:/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:3000 -r zap_out.html || true
 
-      - name: Guardar Reporte de ZAP como Artefacto
+      - name: Guardar Reporte de ZAP como Artefacto Nativo
         uses: actions/upload-artifact@v4
         with:
-          name: 'reportefinal'
-          path: 'zap_out.html'
+          name: reportefinal
+          path: ${{ github.workspace }}/zap_out.html
