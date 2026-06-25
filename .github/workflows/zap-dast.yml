@@ -1,0 +1,29 @@
+name: AppSec DAST Scan
+on:
+  workflow_dispatch: # Esto te permite activar el escaneo manualmente desde la web de GitHub
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Escaneo Dinamico con OWASP ZAP
+    steps:
+      - name: Checkout del codigo fuente
+        uses: actions/checkout@v4
+
+      - name: Levantar OWASP Juice Shop en Docker
+        run: |
+          docker run -d --name juice-shop-app -p 3000:3000 bkimminich/juice-shop
+          # Esperar 15 segundos para asegurar que el servidor web de la app responda bien
+          sleep 15
+
+      - name: Ejecutar OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          fail_action: false # Permite que el pipeline termine con exito aunque encuentre vulnerabilidades, para que puedas descargar el reporte HTML
+
+      - name: Guardar Reporte de ZAP como Artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-owasp-zap
+          path: zap_out.html
